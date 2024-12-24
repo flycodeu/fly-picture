@@ -1,0 +1,48 @@
+server:
+  port: 8100
+  servlet:
+    context-path: /api
+spring:
+  application:
+    name: fly-picture-backend
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/fly-picture?useUnicode=true&characterEncoding=utf8
+    username: root
+    password: root
+
+mybatis-plus:
+  configuration:
+    # MyBatis 配置
+    map-underscore-to-camel-case: false
+    # 添加日志·
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+  global-config:
+    # 全局配置
+    db-config:
+      # 数据库配置
+      id-type: auto
+      logic-delete-field: isDeleted
+      # 逻辑删除字段对应的值，表示已删除，默认值 0
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+
+knife4j:
+  enable: true
+  openapi:
+    title: 智能协同云图库文档
+    description: "智能协同云图库文档"
+    email: flycodeu@foxmail.com
+    concat: flycodeu
+    url: https://docs.xiaominfo.com
+    version: v4.0
+    license: Apache 2.0
+    license-url: https://stackoverflow.com/
+    terms-of-service-url: https://stackoverflow.com/
+    group:
+      default:
+        api-rule: package
+        api-rule-resources:
+          - com.fly.flyPicture.controller
