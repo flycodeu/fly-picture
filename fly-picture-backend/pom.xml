@@ -55,6 +55,12 @@
             <version>4.4.0</version>
         </dependency>
 
+        <!--校验-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+
     </dependencies>
     <dependencyManagement>
         <dependencies>
