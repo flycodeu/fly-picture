@@ -1,4 +1,4 @@
-package com.fly.flyPicture.model.dto;
+package com.fly.flyPicture.model.dto.user;
 
 import lombok.Data;
 import org.hibernate.validator.constraints.Length;

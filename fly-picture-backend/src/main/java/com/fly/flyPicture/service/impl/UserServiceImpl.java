@@ -1,5 +1,7 @@
 package com.fly.flyPicture.service.impl;
 
+import cn.hutool.core.util.ObjUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -7,17 +9,25 @@ import com.fly.flyPicture.constant.UserConstant;
 import com.fly.flyPicture.exception.BusinessException;
 import com.fly.flyPicture.exception.ErrorCode;
 import com.fly.flyPicture.exception.ThrowUtils;
+import com.fly.flyPicture.model.dto.user.UserAddDto;
+import com.fly.flyPicture.model.dto.user.UserQueryDto;
+import com.fly.flyPicture.model.dto.user.UserUpdateDto;
 import com.fly.flyPicture.model.entity.User;
 import com.fly.flyPicture.model.enums.UserRoleEnum;
 import com.fly.flyPicture.model.vo.UserLoginVo;
+import com.fly.flyPicture.model.vo.UserVo;
 import com.fly.flyPicture.service.UserService;
 import com.fly.flyPicture.mapper.UserMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.DigestUtils;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author flycode
@@ -95,6 +105,25 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     @Override
+    public UserVo getUserVo(User user) {
+        if (user == null) {
+            return null;
+        }
+        UserVo userVo = new UserVo();
+        BeanUtils.copyProperties(user, userVo);
+        return userVo;
+    }
+
+    @Override
+    public List<UserVo> getUserVoList(List<User> userList) {
+        if (CollectionUtils.isEmpty(userList)) {
+            return new ArrayList<>();
+        }
+        List<UserVo> userVoList = userList.stream().map(this::getUserVo).collect(Collectors.toList());
+        return userVoList;
+    }
+
+    @Override
     public User getLoginUserByRequest(HttpServletRequest request) {
         // 1. 判断是否登录过
         Object attribute = request.getSession().getAttribute(UserConstant.USER_LOGIN_STATE);
@@ -126,6 +155,60 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         final String SALT = "flycodeu";
         return DigestUtils.md5DigestAsHex((SALT + userPassword).getBytes());
     }
+
+
+    @Override
+    public QueryWrapper<User> getQueryWrapper(UserQueryDto userQueryDto) {
+        if (userQueryDto == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "请求参数为空");
+        }
+        Long id = userQueryDto.getId();
+        String userAccount = userQueryDto.getUserAccount();
+        String userName = userQueryDto.getUserName();
+        String userProfile = userQueryDto.getUserProfile();
+        String userRole = userQueryDto.getUserRole();
+        String sortField = userQueryDto.getSortField();
+        String sortOrder = userQueryDto.getSortOrder();
+        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq(ObjUtil.isNotNull(id), "id", id);
+        queryWrapper.eq(StrUtil.isNotBlank(userRole), "userRole", userRole);
+        queryWrapper.like(StrUtil.isNotBlank(userAccount), "userAccount", userAccount);
+        queryWrapper.like(StrUtil.isNotBlank(userName), "userName", userName);
+        queryWrapper.like(StrUtil.isNotBlank(userProfile), "userProfile", userProfile);
+        queryWrapper.orderBy(StrUtil.isNotEmpty(sortField), "ascend".equals(sortOrder), sortField);
+        return queryWrapper;
+    }
+
+    @Override
+    public Boolean addUser(UserAddDto userAddDto) {
+        if (userAddDto == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "新增用户参数为空");
+        }
+        User user = new User();
+        BeanUtils.copyProperties(userAddDto, user);
+        String encryptPassword = getEncryptPassword(UserConstant.DEFAULT_PASSWROD);
+        user.setUserPassword(encryptPassword);
+        boolean save = this.save(user);
+        if (!save) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "新增用户失败");
+        }
+        return true;
+    }
+
+    @Override
+    public Boolean updateUser(UserUpdateDto userUpdateDto) {
+        if (userUpdateDto == null || userUpdateDto.getId() <= 0) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "更新用户参数为空");
+        }
+        User user = new User();
+        BeanUtils.copyProperties(userUpdateDto, user);
+        boolean update = this.updateById(user);
+        if (!update) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "更新用户失败");
+        }
+        return true;
+    }
+
 }
 
 

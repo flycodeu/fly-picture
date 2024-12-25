@@ -2,10 +2,16 @@ package com.fly.flyPicture.service;
 
 import javax.servlet.http.HttpServletRequest;
 
-import cn.hutool.http.server.HttpServerRequest;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.fly.flyPicture.model.dto.user.UserAddDto;
+import com.fly.flyPicture.model.dto.user.UserQueryDto;
+import com.fly.flyPicture.model.dto.user.UserUpdateDto;
 import com.fly.flyPicture.model.entity.User;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.fly.flyPicture.model.vo.UserLoginVo;
+import com.fly.flyPicture.model.vo.UserVo;
+
+import java.util.List;
 
 /**
  * @author flycode
@@ -42,8 +48,26 @@ public interface UserService extends IService<User> {
      */
     UserLoginVo getLoginUserVo(User user);
 
+
+    /**
+     * 获取脱敏的登录用户信息
+     *
+     * @param user
+     * @return
+     */
+    UserVo getUserVo(User user);
+
+    /**
+     * 分页查询登录用户信息
+     *
+     * @param userList
+     * @return
+     */
+    List<UserVo> getUserVoList(List<User> userList);
+
     /**
      * 获取当前登录用户
+     *
      * @param request
      * @return
      */
@@ -51,8 +75,23 @@ public interface UserService extends IService<User> {
 
     /**
      * 用户退出
+     *
      * @param request
      * @return
      */
     Boolean userLogOut(HttpServletRequest request);
+
+    /**
+     * 提取通用查询条件
+     *
+     * @param userQueryDto
+     * @return
+     */
+    QueryWrapper<User> getQueryWrapper(UserQueryDto userQueryDto);
+
+    Boolean addUser(UserAddDto userAddDto);
+
+    Boolean updateUser(UserUpdateDto userUpdateDto);
+
+
 }
