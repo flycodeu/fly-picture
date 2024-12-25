@@ -1,15 +1,23 @@
 package com.fly.flyPicture.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.fly.flyPicture.constant.UserConstant;
 import com.fly.flyPicture.exception.BusinessException;
 import com.fly.flyPicture.exception.ErrorCode;
+import com.fly.flyPicture.exception.ThrowUtils;
 import com.fly.flyPicture.model.entity.User;
 import com.fly.flyPicture.model.enums.UserRoleEnum;
+import com.fly.flyPicture.model.vo.UserLoginVo;
 import com.fly.flyPicture.service.UserService;
 import com.fly.flyPicture.mapper.UserMapper;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
+
+import javax.servlet.http.HttpServletRequest;
 
 /**
  * @author flycode
@@ -17,6 +25,7 @@ import org.springframework.util.DigestUtils;
  * @createDate 2024-12-24 15:21:38
  */
 @Service
+@Slf4j
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
 
     @Override
@@ -47,8 +56,75 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         return user.getId();
     }
 
+    @Override
+    public UserLoginVo userLogin(String userAccount, String userPassword, HttpServletRequest request) {
+        //  1. 校验参数
+
+        // 2. 判断用户是否存在
+        User user = this.getOne(new LambdaQueryWrapper<User>().eq(User::getUserAccount, userAccount));
+        ThrowUtils.throwIf(user == null, ErrorCode.NOT_FOUND_ERROR);
+
+        // 3. 校验密码
+        String dbUserPassword = user.getUserPassword();
+        String encryptPassword = getEncryptPassword(userPassword);
+        if (!dbUserPassword.equals(encryptPassword)) {
+            log.info("user login failed,userAccount:{}", userAccount);
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "账号或密码错误");
+        }
+
+        request.getSession().setAttribute(UserConstant.USER_LOGIN_STATE, user);
+
+        // 4.登录成功
+        return this.getLoginUserVo(user);
+    }
+
+    /**
+     * 返回分装的用户信息
+     *
+     * @param user
+     * @return
+     */
+    @Override
+    public UserLoginVo getLoginUserVo(User user) {
+        if (user == null) {
+            return null;
+        }
+        UserLoginVo userLoginVo = new UserLoginVo();
+        BeanUtils.copyProperties(user, userLoginVo);
+        return userLoginVo;
+    }
+
+    @Override
+    public User getLoginUserByRequest(HttpServletRequest request) {
+        // 1. 判断是否登录过
+        Object attribute = request.getSession().getAttribute(UserConstant.USER_LOGIN_STATE);
+        User currentUser = (User) attribute;
+        if (currentUser == null || currentUser.getId() == null) {
+            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
+        }
+
+        // 2. 用户登录有对应信息
+        Long userId = currentUser.getId();
+        currentUser = this.getById(userId);
+        if (currentUser == null) {
+            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
+        }
+        return currentUser;
+    }
+
+    @Override
+    public Boolean userLogOut(HttpServletRequest request) {
+        Object attribute = request.getSession().getAttribute(UserConstant.USER_LOGIN_STATE);
+        if (attribute == null) {
+            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
+        }
+        request.getSession().removeAttribute(UserConstant.USER_LOGIN_STATE);
+        return true;
+    }
+
     public String getEncryptPassword(String userPassword) {
-        return DigestUtils.md5DigestAsHex(userPassword.getBytes());
+        final String SALT = "flycodeu";
+        return DigestUtils.md5DigestAsHex((SALT + userPassword).getBytes());
     }
 }
 
