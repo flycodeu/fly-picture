@@ -28,11 +28,12 @@ myAxios.interceptors.response.use(
     if (data.code === 40100) {
       // 不是获取的用户信息的请求，并且用户目前不是已经在用户登录界面，则跳转登录界面
       if (
-        !response.request.responseURL.includes('/user/get/login') &&
+        !response.request.responseURL.includes('user/get/login') &&
         !window.location.pathname.includes('/user/login')
       ) {
         message.error('请先登录');
-        window.location.href=`/user/login?redirect=${window.location.href}`
+        // ?redirect=${window.location.href}
+        window.location.href = `/user/login?redirect=${window.location.href}`
       }
     }
     // 2xx 范围内的状态码都会触发该函数。
