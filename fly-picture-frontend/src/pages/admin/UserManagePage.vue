@@ -14,6 +14,31 @@
       </a-form>
     </div>
 
+    <a-button @click="doAdd" style="padding-bottom: 20px">新增</a-button>
+    <a-modal v-model:open="visiable" :confirm-loading="confirmLoading" @ok="handleOk">
+      <a-form
+        :model="addUserModel"
+        :label-col="labelCol"
+        style="padding-top: 40px; padding-right: 30px"
+      >
+        <a-form-item
+          name="userAccount"
+          label="账号"
+          :rules="[{ required: true, message: '输入账号' }]"
+        >
+          <a-input v-model:value="addUserModel.userAccount" />
+        </a-form-item>
+        <a-form-item name="userName" label="昵称">
+          <a-input v-model:value="addUserModel.userName" />
+        </a-form-item>
+        <a-form-item name="userRole" label="角色">
+          <a-radio-group v-model:value="addUserModel.userRole">
+            <a-radio value="user">用户</a-radio>
+            <a-radio value="admin">管理员</a-radio>
+          </a-radio-group>
+        </a-form-item>
+      </a-form>
+    </a-modal>
     <a-table
       :columns="columns"
       :data-source="dataList"
@@ -36,18 +61,43 @@
           {{ dayjs(record.createTime).format('YYYY-MM-DD HH:mm:ss') }}
         </template>
         <template v-else-if="column.key === 'action'">
-          <a-button type="default">编辑</a-button>
+          <a-button type="default" @click="doEditUser(record.id)">编辑</a-button>
           <a-button type="primary" danger @click="deleteUser(record.id)">删除</a-button>
         </template>
       </template>
     </a-table>
+    <a-modal v-model:open="editVisiable" :confirm-loading="confirmLoading" @ok="editHandleOk">
+      <a-form
+        :model="editUserModel"
+        :label-col="labelCol"
+        style="padding-top: 40px; padding-right: 30px"
+      >
+        <a-form-item name="userName" label="昵称">
+          <a-input v-model:value="editUserModel.userName" />
+        </a-form-item>
+        <a-form-item name="userProfile" label="简介">
+          <a-input v-model:value="editUserModel.userProfile" />
+        </a-form-item>
+        <a-form-item name="userRole" label="角色">
+          <a-radio-group v-model:value="editUserModel.userRole">
+            <a-radio value="user">用户</a-radio>
+            <a-radio value="admin">管理员</a-radio>
+          </a-radio-group>
+        </a-form-item>
+      </a-form>
+    </a-modal>
   </div>
 </template>
 <script lang="ts" setup>
-import { SmileOutlined } from '@ant-design/icons-vue'
 import { computed, onMounted, reactive, ref } from 'vue'
-import { deleteUserUsingPost, listUserVoUsingPost } from '@/api/userController.ts'
-import { message } from 'ant-design-vue'
+import {
+  addUserUsingPost,
+  deleteUserUsingPost,
+  getUserVoByIdUsingGet,
+  listUserVoUsingPost,
+  updateUserUsingPost,
+} from '@/api/userController.ts'
+import { type FormInstance, message } from 'ant-design-vue'
 import dayjs from 'dayjs'
 
 const columns = [
@@ -150,5 +200,89 @@ const deleteUser = async (id: number) => {
   } else {
     message.error('删除失败')
   }
+}
+
+/**
+ * 用户新增
+ */
+const labelCol = { style: { width: '100px' } }
+
+const addUserModel = reactive<API.UserAddDto>({
+  userRole: 'user',
+  userAccount: '',
+  userName: '',
+})
+const visiable = ref(false)
+const confirmLoading = ref<boolean>(false)
+const handleOk = async () => {
+  console.log(addUserModel)
+  confirmLoading.value = true
+  if (addUserModel.userAccount === '') {
+    message.error('请输入账号')
+    confirmLoading.value = false
+    return
+  }
+
+  const res = await addUserUsingPost({
+    ...addUserModel,
+  })
+  if (res.data.code === 0 && res.data.data) {
+    message.success('新增成功')
+    await fetchUserList()
+    confirmLoading.value = false
+    visiable.value = false
+  } else {
+    message.error(res.data.message)
+    confirmLoading.value = false
+    visiable.value = false
+  }
+}
+
+const doAdd = () => {
+  visiable.value = true
+}
+
+/**
+ * 编辑用户
+ */
+const editUserModel = reactive<API.UserUpdateDto>({
+  userRole: 'user',
+  userName: '',
+  userProfile: '',
+})
+
+const editVisiable = ref(false)
+const editHandleOk = async () => {
+  console.log(editUserModel)
+  confirmLoading.value = true
+  const res = await updateUserUsingPost({
+    ...editUserModel,
+  })
+  if (res.data.code === 0 && res.data.data) {
+    message.success('修改成功')
+    await fetchUserList()
+    confirmLoading.value = false
+    editVisiable.value = false
+  } else {
+    message.error(res.data.message)
+    confirmLoading.value = false
+    editVisiable.value = false
+  }
+}
+
+const doEditUser = async (id: number) => {
+  console.log(id)
+  if (!id) {
+    message.error('对应用户不存在或已被删除')
+    return
+  }
+  const res = await getUserVoByIdUsingGet({id})
+  if (res.data.code === 0 && res.data.data) {
+    editUserModel.userName = res.data.data.userName
+    editUserModel.userRole = res.data.data.userRole
+    editUserModel.userProfile = res.data.data.userProfile
+    editUserModel.id = res.data.data.id
+  }
+  editVisiable.value = true
 }
 </script>

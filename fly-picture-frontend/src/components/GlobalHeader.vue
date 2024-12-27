@@ -33,6 +33,10 @@
                     <LoginOutlined />
                     退出登录
                   </a-menu-item>
+                  <a-menu-item @click="doUserCenter">
+                    <UserOutlined />
+                    个人设置
+                  </a-menu-item>
                 </a-menu>
               </template>
             </a-dropdown>
@@ -123,6 +127,8 @@ const userLogOut = async () => {
     message.error('退出失败' + res.data.message)
   }
 }
+
+const doUserCenter = async () => {}
 </script>
 
 <style scoped>
