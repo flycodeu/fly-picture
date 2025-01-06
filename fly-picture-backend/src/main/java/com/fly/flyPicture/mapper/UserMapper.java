@@ -2,6 +2,7 @@ package com.fly.flyPicture.mapper;
 
 import com.fly.flyPicture.model.entity.User;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import org.apache.ibatis.annotations.Mapper;
 
 /**
  * @author flycode
@@ -9,6 +10,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
  * @createDate 2024-12-24 15:21:38
  * @Entity com.fly.flyPicture.model.entity.User
  */
+@Mapper
 public interface UserMapper extends BaseMapper<User> {
 
     Long userCount(String userAccount);

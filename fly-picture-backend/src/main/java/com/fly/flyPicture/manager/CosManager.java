@@ -8,6 +8,7 @@ import com.qcloud.cos.model.COSObject;
 import com.qcloud.cos.model.GetObjectRequest;
 import com.qcloud.cos.model.PutObjectRequest;
 import com.qcloud.cos.model.PutObjectResult;
+import com.qcloud.cos.model.ciModel.persistence.PicOperations;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -39,13 +40,35 @@ public class CosManager {
     /**
      * 流式下载
      * <a href="https://cloud.tencent.com/document/product/436/65937#990ad571-e935-40cb-806b-c645b581260c">...</a>
+     *
      * @param key 文件地址 /bucket/文件名
      * @return
      * @throws CosClientException
      * @throws CosServiceException
      */
     public COSObject getObject(String key) throws CosClientException, CosServiceException {
-        COSObject cosObject = cosClient.getObject(cosClientConfig.getBucket(),key);
+        COSObject cosObject = cosClient.getObject(cosClientConfig.getBucket(), key);
         return cosObject;
+    }
+
+
+    /**
+     * https://cloud.tencent.com/document/product/436/55377
+     * 图片上传
+     *
+     * @param key
+     * @param file
+     * @return
+     * @throws CosClientException
+     * @throws CosServiceException
+     */
+    public PutObjectResult putPictureObject(String key, File file) throws CosClientException, CosServiceException {
+        PutObjectRequest putObjectRequest = new PutObjectRequest(cosClientConfig.getBucket(), key, file);
+        // 图片处理
+        PicOperations picOperations = new PicOperations();
+        // 1. 返回原图信息
+        picOperations.setIsPicInfo(1);
+        putObjectRequest.setPicOperations(picOperations);
+        return cosClient.putObject(putObjectRequest);
     }
 }

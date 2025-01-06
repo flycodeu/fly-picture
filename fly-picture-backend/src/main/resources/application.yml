@@ -10,6 +10,9 @@ spring:
     url: jdbc:mysql://localhost:3306/fly-picture?useUnicode=true&characterEncoding=utf8
     username: root
     password: root
+  servlet:
+    multipart:
+      max-file-size: 5MB
 
 mybatis-plus:
   configuration:
