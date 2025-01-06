@@ -93,5 +93,11 @@ public interface UserService extends IService<User> {
 
     Boolean updateUser(UserUpdateDto userUpdateDto);
 
+    /**
+     * 是否为管理员
+     * @param user
+     * @return
+     */
+    Boolean isAdmin(User user);
 
 }
