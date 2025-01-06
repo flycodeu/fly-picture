@@ -3,6 +3,7 @@ package com.fly.flyPicture.model.dto.user;
 import lombok.Data;
 import org.hibernate.validator.constraints.Length;
 
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.Date;
 
@@ -20,6 +21,7 @@ public class UserAddDto implements Serializable {
      * 账号
      */
     @Length(min = 4, max = 10, message = "用户名4-10位")
+    @NotNull(message = "用户名不能为空")
     private String userAccount;
 
 

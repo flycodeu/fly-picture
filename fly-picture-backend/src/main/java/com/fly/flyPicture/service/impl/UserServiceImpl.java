@@ -24,6 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.DigestUtils;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
@@ -188,6 +189,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         BeanUtils.copyProperties(userAddDto, user);
         String encryptPassword = getEncryptPassword(UserConstant.DEFAULT_PASSWROD);
         user.setUserPassword(encryptPassword);
+//        long count = this.count(new QueryWrapper<User>().eq("userAccount", user.getUserAccount()));
+//        if (count > 0) {
+//         throw new BusinessException(ErrorCode.PARAMS_ERROR,"账号名已存在");
+//        }
+        Long count = this.baseMapper.userCount(userAddDto.getUserAccount());
+        if (count > 0) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "账号名已存在");
+        }
         boolean save = this.save(user);
         if (!save) {
             throw new BusinessException(ErrorCode.OPERATION_ERROR, "新增用户失败");

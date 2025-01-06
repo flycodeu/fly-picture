@@ -24,4 +24,9 @@
         userRole,editTime,createTime,
         updateTime,isDelete
     </sql>
+    <select id="userCount" resultType="java.lang.Long">
+        select count(*)
+        from user
+        where userAccount = #{userAccount}
+    </select>
 </mapper>
