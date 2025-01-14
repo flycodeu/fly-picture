@@ -121,7 +121,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> impl
         queryWrapper.eq(ObjUtil.isNotNull(picHeight), "picHeight", picHeight);
         queryWrapper.eq(ObjUtil.isNotNull(picScale), "picScale", picScale);
         // tags标签 JSON数组查询
-        if (CollectionUtils.isNullOrEmpty(tags)) {
+        if (!CollectionUtils.isNullOrEmpty(tags)) {
             for (String tag : tags) {
                 queryWrapper.like("tags", "\"" + tag + "\"");
             }
@@ -148,7 +148,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> impl
         // 1. 封装分页vo
         List<Picture> pictureList = picturePage.getRecords();
         Page<PictureVo> pictureVoPage = new Page<>(picturePage.getCurrent(), picturePage.getSize(), picturePage.getTotal());
-        if (CollUtil.isNotEmpty(pictureList)) {
+        if (CollUtil.isEmpty(pictureList)) {
             return pictureVoPage;
         }
         List<PictureVo> pictureVoList = pictureList.stream().map(PictureVo::objToVo).collect(Collectors.toList());

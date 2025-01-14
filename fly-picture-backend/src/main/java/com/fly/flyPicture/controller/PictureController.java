@@ -65,7 +65,7 @@ public class PictureController {
      */
     @PostMapping("/delete")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
-    public BaseResponse<Boolean> deleteUserById(@RequestBody DeleteRequest deleteRequest, HttpServletRequest request) {
+    public BaseResponse<Boolean> deletePictureById(@RequestBody DeleteRequest deleteRequest, HttpServletRequest request) {
         if (deleteRequest == null || deleteRequest.getId() <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
@@ -197,8 +197,7 @@ public class PictureController {
         Picture picture = new Picture();
         BeanUtils.copyProperties(pictureEditDto, picture);
         // 将tags转换
-        List<String> tags = pictureEditDto.getTags();
-        picture.setTags(JSONUtil.toJsonStr(tags));
+        picture.setTags(JSONUtil.toJsonStr(pictureEditDto.getTags()));
         // 设置编辑时间
         picture.setEditTime(new Date());
         // 数据校验

@@ -65,7 +65,7 @@ public class FileManager {
             // 封装返回结果
             UploadPictureDto uploadPictureDto = new UploadPictureDto();
             uploadPictureDto.setUrl(cosClientConfig.getHost() + "/" + uploadFilePath);
-            uploadPictureDto.setPicName(FileUtil.mainName(uploadFileName));
+            uploadPictureDto.setPicName(FileUtil.mainName(originalFilename));
             uploadPictureDto.setPicSize(FileUtil.size(file));
             uploadPictureDto.setPicWidth(imageInfo.getWidth());
             uploadPictureDto.setPicHeight(imageInfo.getHeight());
