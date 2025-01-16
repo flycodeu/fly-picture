@@ -15,6 +15,7 @@ import com.fly.flyPicture.model.entity.Picture;
 import com.fly.flyPicture.model.entity.User;
 import com.fly.flyPicture.model.vo.PictureTagCategory;
 import com.fly.flyPicture.model.vo.PictureVo;
+import com.fly.flyPicture.model.vo.UserVo;
 import com.fly.flyPicture.service.impl.PictureServiceImpl;
 import com.fly.flyPicture.service.impl.UserServiceImpl;
 import org.springframework.beans.BeanUtils;
@@ -72,7 +73,7 @@ public class PictureController {
         User user = userService.getLoginUserByRequest(request);
         Long id = user.getId();
         // 数据是否存在
-        Picture oldPicture = pictureService.getById(id);
+        Picture oldPicture = pictureService.getById(deleteRequest.getId());
         // 只有管理员或者当前用户才能删除
         if (!userService.isAdmin(user) || !oldPicture.getUserId().equals(id)) {
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
@@ -148,6 +149,11 @@ public class PictureController {
         Picture picture = pictureService.getById(id);
         ThrowUtils.throwIf(picture == null, ErrorCode.NOT_FOUND_ERROR);
         PictureVo pictureVo = PictureVo.objToVo(picture);
+        if (picture.getUserId() != null) {
+            User user = userService.getById(picture.getUserId());
+            UserVo userVo = userService.getUserVo(user);
+            pictureVo.setUser(userVo);
+        }
         return ResultUtils.success(pictureVo);
     }
 

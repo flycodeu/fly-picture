@@ -11,7 +11,7 @@ const myAxios = axios.create({
 // 添加请求拦截器
 myAxios.interceptors.request.use(
   function (config) {
-    console.log(config)
+    //console.log(config)
     // 在发送请求之前做些什么
     return config
   },
