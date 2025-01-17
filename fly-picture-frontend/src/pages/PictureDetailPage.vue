@@ -72,17 +72,14 @@
   </div>
 </template>
 <script lang="ts" setup>
-import { useRoute } from 'vue-router'
 import {
   deletePictureByIdUsingPost,
-  getPictureUsingGet,
   getPictureVoUsingGet,
 } from '@/api/pictureController.ts'
 import { computed, onMounted, ref } from 'vue'
 import { message } from 'ant-design-vue'
 import { downloadImage, formatSize } from '@/utils'
 import { EditOutlined, DeleteOutlined, DownloadOutlined } from '@ant-design/icons-vue'
-import { getLoginUserUsingGet } from '@/api/userController.ts'
 import { useLoginUserStore } from '@/stores/useLoginUserStore.ts'
 import router from '@/router'
 

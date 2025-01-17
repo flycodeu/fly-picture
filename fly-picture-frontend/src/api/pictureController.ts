@@ -17,6 +17,21 @@ export async function deletePictureByIdUsingPost(
   })
 }
 
+/** doPictureReview POST /api/picture/doPictureReview */
+export async function doPictureReviewUsingPost(
+  body: API.PictureReviewDto,
+  options?: { [key: string]: any }
+) {
+  return request<API.BaseResponseBoolean_>('/api/picture/doPictureReview', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    data: body,
+    ...(options || {}),
+  })
+}
+
 /** editPicture POST /api/picture/edit */
 export async function editPictureUsingPost(
   body: API.PictureEditDto,

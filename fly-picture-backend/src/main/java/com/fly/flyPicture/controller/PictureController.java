@@ -13,6 +13,7 @@ import com.fly.flyPicture.exception.ThrowUtils;
 import com.fly.flyPicture.model.dto.picture.*;
 import com.fly.flyPicture.model.entity.Picture;
 import com.fly.flyPicture.model.entity.User;
+import com.fly.flyPicture.model.enums.PictureReviewStatusEnum;
 import com.fly.flyPicture.model.vo.PictureTagCategory;
 import com.fly.flyPicture.model.vo.PictureVo;
 import com.fly.flyPicture.model.vo.UserVo;
@@ -51,7 +52,7 @@ public class PictureController {
      * @return 封装的图片
      */
     @PostMapping("/upload")
-    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    //@AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponse<PictureVo> uploadPicture(@RequestPart("file") MultipartFile file, PictureUploadDto pictureUploadDto, HttpServletRequest request) {
         User user = userService.getLoginUserByRequest(request);
         PictureVo pictureVo = pictureService.uploadPicture(file, pictureUploadDto, user);
@@ -108,6 +109,11 @@ public class PictureController {
         if (oldPicture == null) {
             throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
         }
+
+        User user = userService.getLoginUserByRequest(request);
+        // 审核参数
+        pictureService.filePictureParams(picture, user);
+
         // 修改数据
         boolean result = pictureService.updateById(picture);
         if (!result) {
@@ -148,12 +154,7 @@ public class PictureController {
         }
         Picture picture = pictureService.getById(id);
         ThrowUtils.throwIf(picture == null, ErrorCode.NOT_FOUND_ERROR);
-        PictureVo pictureVo = PictureVo.objToVo(picture);
-        if (picture.getUserId() != null) {
-            User user = userService.getById(picture.getUserId());
-            UserVo userVo = userService.getUserVo(user);
-            pictureVo.setUser(userVo);
-        }
+        PictureVo pictureVo = pictureService.getPictureVo(picture, request);
         return ResultUtils.success(pictureVo);
     }
 
@@ -184,7 +185,8 @@ public class PictureController {
         int pageSize = pictureQueryDto.getPageSize();
         // 限制爬虫
         ThrowUtils.throwIf(pageSize > 20, ErrorCode.PARAMS_ERROR);
-
+        // 普通用户查看默认通过数据
+        pictureQueryDto.setReviewStatus(PictureReviewStatusEnum.PASS.getValue());
         Page<Picture> picturePage = pictureService.page(new Page<>(current, pageSize), pictureService.getQueryWrapper(pictureQueryDto));
 
         return ResultUtils.success(pictureService.getPictureVoPage(picturePage, request));
@@ -214,6 +216,10 @@ public class PictureController {
         ThrowUtils.throwIf(oldPicture == null, ErrorCode.NOT_FOUND_ERROR);
         // 设置用户id
         User user = userService.getLoginUserByRequest(request);
+
+        // 审核参数
+        pictureService.filePictureParams(picture, user);
+
         // 仅限管理员和自己才能修改
         String userRole = user.getUserRole();
         if (!userRole.equals(UserConstant.ADMIN_ROLE) && !oldPicture.getUserId().equals(user.getId())) {
@@ -241,4 +247,20 @@ public class PictureController {
         return ResultUtils.success(pictureTagCategory);
     }
 
+
+    /**
+     * 管理员审核图片
+     *
+     * @param pictureReviewDto
+     * @param request
+     * @return
+     */
+    @PostMapping("/doPictureReview")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    public BaseResponse<Boolean> doPictureReview(@RequestBody PictureReviewDto pictureReviewDto, HttpServletRequest request) {
+        ThrowUtils.throwIf(pictureReviewDto == null || pictureReviewDto.getId() <= 0, ErrorCode.PARAMS_ERROR);
+        User user = userService.getLoginUserByRequest(request);
+        pictureService.doPictureReview(pictureReviewDto, user);
+        return ResultUtils.success(true);
+    }
 }

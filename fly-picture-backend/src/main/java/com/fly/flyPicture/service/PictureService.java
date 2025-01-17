@@ -3,6 +3,7 @@ package com.fly.flyPicture.service;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.fly.flyPicture.model.dto.picture.PictureQueryDto;
+import com.fly.flyPicture.model.dto.picture.PictureReviewDto;
 import com.fly.flyPicture.model.dto.picture.PictureUploadDto;
 import com.fly.flyPicture.model.dto.user.UserQueryDto;
 import com.fly.flyPicture.model.entity.Picture;
@@ -44,4 +45,18 @@ public interface PictureService extends IService<Picture> {
     Page<PictureVo> getPictureVoPage(Page<Picture> picturePage, HttpServletRequest request);
 
     void validPicture(Picture picture);
+
+    /**
+     * 图片审核
+     * @param pictureReviewDto
+     * @param loginUser
+     */
+    void doPictureReview(PictureReviewDto pictureReviewDto, User loginUser);
+
+    /**
+     * 自动填充图片上传审核参数
+     * @param picture 图片
+     * @param loginUser 登录用户
+     */
+    void filePictureParams(Picture picture, User loginUser);
 }
