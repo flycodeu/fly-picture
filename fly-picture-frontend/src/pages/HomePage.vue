@@ -126,7 +126,7 @@ const fetchPictureVoList = async () => {
   const res = await getPictureVoPageUsingPost(params)
   if (res.data.code === 0 && res.data.data) {
     dataList.value = res.data.data.records ?? []
-    total.value = Number(res.data.data.records?.length) ?? 0
+    total.value = Number(res.data.data.total) ?? 0
   } else {
     message.error('获取图片数据失败，' + res.data.message)
   }
