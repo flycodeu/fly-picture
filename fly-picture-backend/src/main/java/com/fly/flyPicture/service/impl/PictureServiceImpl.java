@@ -5,6 +5,7 @@ import java.util.*;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -15,10 +16,7 @@ import com.fly.flyPicture.manager.FileManager;
 import com.fly.flyPicture.manager.upload.FilePictureUpload;
 import com.fly.flyPicture.manager.upload.PictureUploadTemplate;
 import com.fly.flyPicture.manager.upload.UrlPictureUpload;
-import com.fly.flyPicture.model.dto.picture.PictureQueryDto;
-import com.fly.flyPicture.model.dto.picture.PictureReviewDto;
-import com.fly.flyPicture.model.dto.picture.PictureUploadDto;
-import com.fly.flyPicture.model.dto.picture.UploadPictureDto;
+import com.fly.flyPicture.model.dto.picture.*;
 import com.fly.flyPicture.model.entity.Picture;
 import com.fly.flyPicture.model.entity.User;
 import com.fly.flyPicture.model.enums.PictureReviewStatusEnum;
@@ -26,7 +24,13 @@ import com.fly.flyPicture.model.vo.PictureVo;
 import com.fly.flyPicture.model.vo.UserVo;
 import com.fly.flyPicture.service.PictureService;
 import com.fly.flyPicture.mapper.PictureMapper;
+import com.google.gson.JsonObject;
 import com.qcloud.cos.utils.CollectionUtils;
+import lombok.extern.slf4j.Slf4j;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -41,6 +45,7 @@ import java.util.stream.Collectors;
  * @createDate 2025-01-06 10:00:44
  */
 @Service
+@Slf4j
 public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> implements PictureService {
     @Resource
     private FileManager fileManager;
@@ -83,7 +88,11 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> impl
 
         Picture picture = new Picture();
         picture.setUrl(uploadPictureDto.getUrl());
-        picture.setName(uploadPictureDto.getPicName());
+        String picName = uploadPictureDto.getPicName();
+        if (pictureUploadDto != null && pictureUploadDto.getPicName() != null) {
+            picName = pictureUploadDto.getPicName();
+        }
+        picture.setName(picName);
         picture.setPicSize(uploadPictureDto.getPicSize());
         picture.setPicWidth(uploadPictureDto.getPicWidth());
         picture.setPicHeight(uploadPictureDto.getPicHeight());
@@ -268,6 +277,83 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> impl
             picture.setReviewStatus(PictureReviewStatusEnum.REVIEWING.getValue());
         }
 
+    }
+
+    @Override
+    public Integer uploadPictureBatch(PictureUploadBatchDto pictureUploadBatchDto, User loginUser) {
+        // 1. 校验参数
+        String searchText = pictureUploadBatchDto.getSearchText();
+        Integer count = pictureUploadBatchDto.getCount();
+        String namePrefix = pictureUploadBatchDto.getNamePrefix();
+        if (StrUtil.isBlank(namePrefix)) {
+            namePrefix = searchText;
+        }
+        if (StrUtil.isBlank(searchText)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "请输入关键词");
+        }
+        if (count > 30) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "一次最多上传30张图片");
+        }
+        // 2. 抓取内容
+        String fetchUrl = String.format("https://cn.bing.com/images/async?q=%s&mmasync=1", searchText);
+        Document document;
+        try {
+            document = Jsoup.connect(fetchUrl).get();
+        } catch (Exception e) {
+            log.error(String.format("抓取图片失败，搜索关键词：%s", searchText));
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "抓取图片失败");
+        }
+
+        // 3. 解析内容
+        Element div = document.getElementsByClass("dgControl").first();
+        if (ObjUtil.isNull(div)) {
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "抓取图片失败");
+        }
+        //Elements elements = div.select("img.mimg");
+        Elements elements = div.select(".iusc");
+        // 成功次数
+        int uploadCount = 0;
+        for (Element element : elements) {
+            //String fileUrl = element.attr("src");
+            String dataM = element.attr("m");
+            String fileUrl;
+            try {
+                fileUrl = JSONUtil.parseObj(dataM).getStr("murl");
+            } catch (Exception e) {
+                log.error(String.format("图片链接解析失败，搜索关键词：%s", searchText));
+                continue;
+            }
+
+            if (StrUtil.isBlank(fileUrl)) {
+                log.error(String.format("图片链接为空，搜索关键词：%s", searchText));
+                continue;
+            }
+            // 处理图片，移除宽高、文件名过长等
+            // 将https://tse2-mm.cn.bing.net/th/id/OIP-C.zmsX95yGGHMh9VDnPsNo7AHaF7?w=236&h=189&c=7&r=0&o=5&dpr=1.6&pid=1.7后面部分数据移除
+            int questionMarkIndex = fileUrl.indexOf("?");
+            if (questionMarkIndex != -1) {
+                fileUrl = fileUrl.substring(0, questionMarkIndex);
+            }
+            PictureUploadDto pictureUploadDto = new PictureUploadDto();
+            pictureUploadDto.setPicName(namePrefix + (uploadCount + 1));
+            pictureUploadDto.setFileUrl(fileUrl);
+
+            try {
+                // 4. 上传图片
+                PictureVo pictureVo = this.uploadPicture(fileUrl, pictureUploadDto, loginUser);
+                log.info(String.format("图片上传成功，图片链接：%s", fileUrl));
+            } catch (Exception e) {
+                log.error("图片上传失败，图片链接：{}", fileUrl, e);
+                continue;
+            }
+
+            uploadCount++;
+            if (uploadCount >= count) {
+                break;
+            }
+        }
+
+        return uploadCount;
     }
 }
 

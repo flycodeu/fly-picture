@@ -53,7 +53,7 @@ public class PictureController {
      */
     @PostMapping("/upload")
     //@AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
-    public BaseResponse<PictureVo> uploadPicture(@RequestPart("file") MultipartFile file,  PictureUploadDto pictureUploadDto, HttpServletRequest request) {
+    public BaseResponse<PictureVo> uploadPicture(@RequestPart("file") MultipartFile file, PictureUploadDto pictureUploadDto, HttpServletRequest request) {
         User user = userService.getLoginUserByRequest(request);
         PictureVo pictureVo = pictureService.uploadPicture(file, pictureUploadDto, user);
         return ResultUtils.success(pictureVo);
@@ -280,5 +280,22 @@ public class PictureController {
         User user = userService.getLoginUserByRequest(request);
         pictureService.doPictureReview(pictureReviewDto, user);
         return ResultUtils.success(true);
+    }
+
+
+    /**
+     * 批量抓取并创建图片
+     *
+     * @param pictureUploadBatchDto
+     * @param request
+     * @return
+     */
+    @PostMapping("/upload/batch")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    public BaseResponse<Integer> uploadPictureByBatch(@RequestBody PictureUploadBatchDto pictureUploadBatchDto, HttpServletRequest request) {
+        ThrowUtils.throwIf(pictureUploadBatchDto == null, ErrorCode.PARAMS_ERROR);
+        User user = userService.getLoginUserByRequest(request);
+        Integer count = pictureService.uploadPictureBatch(pictureUploadBatchDto, user);
+        return ResultUtils.success(count);
     }
 }

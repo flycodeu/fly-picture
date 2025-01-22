@@ -5,6 +5,12 @@ declare namespace API {
     message?: string
   }
 
+  type BaseResponseInt_ = {
+    code?: number
+    data?: number
+    message?: string
+  }
+
   type BaseResponseLong_ = {
     code?: number
     data?: number
@@ -199,9 +205,16 @@ declare namespace API {
     url?: string
   }
 
+  type PictureUploadBatchDto = {
+    count?: number
+    namePrefix?: string
+    searchText?: string
+  }
+
   type PictureUploadDto = {
     fileUrl?: string
     id?: number
+    picName?: string
   }
 
   type PictureVo = {
@@ -226,6 +239,7 @@ declare namespace API {
   type uploadPictureUsingPOSTParams = {
     fileUrl?: string
     id?: number
+    picName?: string
   }
 
   type User = {

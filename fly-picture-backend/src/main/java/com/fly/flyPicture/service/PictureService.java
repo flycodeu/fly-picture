@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.fly.flyPicture.model.dto.picture.PictureQueryDto;
 import com.fly.flyPicture.model.dto.picture.PictureReviewDto;
+import com.fly.flyPicture.model.dto.picture.PictureUploadBatchDto;
 import com.fly.flyPicture.model.dto.picture.PictureUploadDto;
 import com.fly.flyPicture.model.dto.user.UserQueryDto;
 import com.fly.flyPicture.model.entity.Picture;
@@ -24,7 +25,7 @@ public interface PictureService extends IService<Picture> {
     /**
      * 文件上传
      *
-     * @param inputSource 文件输入源
+     * @param inputSource      文件输入源
      * @param pictureUploadDto
      * @param user
      * @return
@@ -48,6 +49,7 @@ public interface PictureService extends IService<Picture> {
 
     /**
      * 图片审核
+     *
      * @param pictureReviewDto
      * @param loginUser
      */
@@ -55,8 +57,19 @@ public interface PictureService extends IService<Picture> {
 
     /**
      * 自动填充图片上传审核参数
-     * @param picture 图片
+     *
+     * @param picture   图片
      * @param loginUser 登录用户
      */
     void filePictureParams(Picture picture, User loginUser);
+
+
+    /**
+     * 批量抓取图片并且上传本地图床
+     *
+     * @param pictureUploadBatchDto 图片搜索关键词
+     * @param loginUser             登录用户，只能是管理员
+     * @return 成功获取图片的数量
+     */
+    Integer uploadPictureBatch(PictureUploadBatchDto pictureUploadBatchDto, User loginUser);
 }
