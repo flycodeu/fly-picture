@@ -1,7 +1,15 @@
 <template>
   <div id="addPicturePage">
     <h2 style="padding-bottom: 10px">{{ route.query?.id ? '修改图片' : '创建图片' }}</h2>
-    <PictureUpload :picture="picture" :on-success="onSuccess" />
+    <a-tabs v-model:activeKey="uploadTab">
+      <a-tab-pane key="file" tab="文件上传">
+        <PictureUpload :picture="picture" :on-success="onSuccess" />
+      </a-tab-pane>
+      <a-tab-pane key="url" tab="url上传" force-render>
+        <UrlPictureUpload :picture="picture" :on-success="onSuccess" />
+      </a-tab-pane>
+    </a-tabs>
+
     <a-form
       :model="pictureForm"
       v-if="picture"
@@ -57,6 +65,7 @@ import {
 import { message } from 'ant-design-vue'
 import router from '@/router'
 import { useRoute } from 'vue-router'
+import UrlPictureUpload from '@/components/UrlPictureUpload.vue'
 
 const picture = ref<API.PictureVo>()
 const onSuccess = (newPicture: API.PictureVo) => {
@@ -65,7 +74,7 @@ const onSuccess = (newPicture: API.PictureVo) => {
 }
 
 const pictureForm = ref<API.PictureEditDto>({})
-
+const uploadTab = ref<'file' | 'url'>('file')
 const handleSubmit = async (values: any) => {
   const pictureId = picture.value?.id
   if (!pictureId) {
@@ -134,7 +143,7 @@ const getOldPicture = async () => {
       pictureForm.value.id = data.id
       pictureForm.value.url = data.url
       pictureForm.value.introduction = data.introduction
-      pictureForm.value.tags = data.tags ? JSON.parse(data.tags) : [];
+      pictureForm.value.tags = data.tags ? JSON.parse(data.tags) : []
       pictureForm.value.category = data.category
     }
   }
