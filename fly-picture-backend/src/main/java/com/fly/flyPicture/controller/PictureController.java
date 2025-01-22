@@ -53,11 +53,29 @@ public class PictureController {
      */
     @PostMapping("/upload")
     //@AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
-    public BaseResponse<PictureVo> uploadPicture(@RequestPart("file") MultipartFile file, PictureUploadDto pictureUploadDto, HttpServletRequest request) {
+    public BaseResponse<PictureVo> uploadPicture(@RequestPart("file") MultipartFile file,  PictureUploadDto pictureUploadDto, HttpServletRequest request) {
         User user = userService.getLoginUserByRequest(request);
         PictureVo pictureVo = pictureService.uploadPicture(file, pictureUploadDto, user);
         return ResultUtils.success(pictureVo);
     }
+
+
+    /**
+     * 通过url上传图片
+     *
+     * @param pictureUploadDto
+     * @param request
+     * @return
+     */
+    @PostMapping("/upload/url")
+    //@AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    public BaseResponse<PictureVo> uploadPictureByUrl(@RequestBody PictureUploadDto pictureUploadDto, HttpServletRequest request) {
+        User user = userService.getLoginUserByRequest(request);
+        String fileUrl = pictureUploadDto.getFileUrl();
+        PictureVo pictureVo = pictureService.uploadPicture(fileUrl, pictureUploadDto, user);
+        return ResultUtils.success(pictureVo);
+    }
+
 
     /**
      * 根据id删除图片

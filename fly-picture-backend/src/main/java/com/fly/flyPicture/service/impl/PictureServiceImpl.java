@@ -12,6 +12,9 @@ import com.fly.flyPicture.exception.BusinessException;
 import com.fly.flyPicture.exception.ErrorCode;
 import com.fly.flyPicture.exception.ThrowUtils;
 import com.fly.flyPicture.manager.FileManager;
+import com.fly.flyPicture.manager.upload.FilePictureUpload;
+import com.fly.flyPicture.manager.upload.PictureUploadTemplate;
+import com.fly.flyPicture.manager.upload.UrlPictureUpload;
 import com.fly.flyPicture.model.dto.picture.PictureQueryDto;
 import com.fly.flyPicture.model.dto.picture.PictureReviewDto;
 import com.fly.flyPicture.model.dto.picture.PictureUploadDto;
@@ -43,11 +46,15 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> impl
     private FileManager fileManager;
     @Resource
     private UserServiceImpl userService;
+    @Resource
+    private FilePictureUpload filePictureUpload;
+    @Resource
+    private UrlPictureUpload urlPictureUpload;
 
     @Override
-    public PictureVo uploadPicture(MultipartFile multipartFile, PictureUploadDto pictureUploadDto, User user) {
+    public PictureVo uploadPicture(Object inputSource, PictureUploadDto pictureUploadDto, User user) {
         // 1. 校验文件
-        ThrowUtils.throwIf(multipartFile.isEmpty(), ErrorCode.PARAMS_ERROR, "文件不能为空");
+        ThrowUtils.throwIf(inputSource == null, ErrorCode.PARAMS_ERROR, "文件不能为空");
 
         // 2.如果是更新， 判断图片是否存在
         Long pictureId = null;
@@ -67,7 +74,12 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> impl
 
         // 3. 上传文件
         String uploadPathPrefix = String.format("public/%s", user.getId());
-        UploadPictureDto uploadPictureDto = fileManager.uploadPicture(multipartFile, uploadPathPrefix);
+        PictureUploadTemplate pictureUploadTemplate = filePictureUpload;
+        if (inputSource instanceof String) {
+            pictureUploadTemplate = urlPictureUpload;
+        }
+
+        UploadPictureDto uploadPictureDto = pictureUploadTemplate.uploadPicture(inputSource, uploadPathPrefix);
 
         Picture picture = new Picture();
         picture.setUrl(uploadPictureDto.getUrl());

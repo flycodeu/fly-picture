@@ -29,8 +29,14 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
+/**
+ * 图片上传工具类
+ *
+ * @author flycodeu
+ */
 @Component
 @Slf4j
+@Deprecated
 public class FileManager {
     @Resource
     private CosClientConfig cosClientConfig;

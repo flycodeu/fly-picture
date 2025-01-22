@@ -12,4 +12,9 @@ public class PictureUploadDto implements Serializable {
     private static final long serialVersionUID = -5502707038817266372L;
 
     private Long id;
+
+    /**
+     * 文件地址
+     */
+    private String fileUrl;
 }
