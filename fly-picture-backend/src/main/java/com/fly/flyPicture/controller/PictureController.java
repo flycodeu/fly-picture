@@ -1,5 +1,7 @@
 package com.fly.flyPicture.controller;
 
+import cn.hutool.Hutool;
+import cn.hutool.core.util.RandomUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.fly.flyPicture.annotation.AuthCheck;
@@ -19,15 +21,23 @@ import com.fly.flyPicture.model.vo.PictureVo;
 import com.fly.flyPicture.model.vo.UserVo;
 import com.fly.flyPicture.service.impl.PictureServiceImpl;
 import com.fly.flyPicture.service.impl.UserServiceImpl;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.LoadingCache;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.util.DigestUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 图片管理
@@ -42,6 +52,19 @@ public class PictureController {
     private PictureServiceImpl pictureService;
     @Resource
     private UserServiceImpl userService;
+    @Resource
+    private StringRedisTemplate stringRedisTemplate;
+
+    /**
+     * Caffeine
+     */
+    private final Cache<String, String> LOCAL_CACHE = Caffeine.newBuilder()
+            // 启动时分配一定的内存空间，避免频繁的内存分配
+            .initialCapacity(1024)
+            // 最大容量
+            .maximumSize(10_000)
+            .expireAfterWrite(Duration.ofMinutes(5))
+            .build();
 
     /**
      * 图片上传
@@ -208,6 +231,56 @@ public class PictureController {
         Page<Picture> picturePage = pictureService.page(new Page<>(current, pageSize), pictureService.getQueryWrapper(pictureQueryDto));
 
         return ResultUtils.success(pictureService.getPictureVoPage(picturePage, request));
+    }
+
+    /**
+     * 分页vo带缓存
+     *
+     * @param pictureQueryDto
+     * @param request
+     * @return
+     */
+    @PostMapping("/list/page/vo/cache")
+    public BaseResponse<Page<PictureVo>> getPictureVoPageWithCache(@RequestBody PictureQueryDto pictureQueryDto, HttpServletRequest request) {
+        int current = pictureQueryDto.getCurrent();
+        int pageSize = pictureQueryDto.getPageSize();
+        // 限制爬虫
+        ThrowUtils.throwIf(pageSize > 20, ErrorCode.PARAMS_ERROR);
+        // 普通用户查看默认通过数据
+        pictureQueryDto.setReviewStatus(PictureReviewStatusEnum.PASS.getValue());
+        // 查询缓存，缓存中存在数据，返回，否则数据库
+        // 设置key
+        String queryCondition = JSONUtil.toJsonStr(pictureQueryDto);
+        String hashKey = DigestUtils.md5DigestAsHex(queryCondition.getBytes());
+        String cacheKey = String.format("flyPicture:listPictureVoByCache:%s", hashKey);
+
+        // 1. 查询本地缓存
+        String localCache = LOCAL_CACHE.getIfPresent(cacheKey);
+        if (localCache != null) {
+            Page<PictureVo> cachePage = JSONUtil.toBean(localCache, Page.class);
+            return ResultUtils.success(cachePage);
+        }
+
+        // 2. 查询分布式缓存
+        String cachedValue = stringRedisTemplate.opsForValue().get(cacheKey);
+        if (cachedValue != null) {
+            LOCAL_CACHE.put(cacheKey, cachedValue);
+            Page<PictureVo> cachePage = JSONUtil.toBean(cachedValue, Page.class);
+            return ResultUtils.success(cachePage);
+        }
+
+        // 3. 查询数据库
+        Page<Picture> picturePage = pictureService.page(new Page<>(current, pageSize), pictureService.getQueryWrapper(pictureQueryDto));
+        Page<PictureVo> pictureVoPage = pictureService.getPictureVoPage(picturePage, request);
+        // 5-10分钟过期，避免缓存雪崩
+        String cacheValue = JSONUtil.toJsonStr(pictureVoPage);
+        int cachedExpireTime = 300 + RandomUtil.randomInt(0, 300);
+
+        // 4. 更新缓存
+        LOCAL_CACHE.put(cacheKey, cacheValue);
+        stringRedisTemplate.opsForValue().set(cacheKey, cacheValue, cachedExpireTime, TimeUnit.SECONDS);
+
+        return ResultUtils.success(pictureVoPage);
     }
 
     /**

@@ -1,5 +1,6 @@
 package com.fly.flyPicture.manager;
 
+import cn.hutool.core.io.FileUtil;
 import com.fly.flyPicture.config.CosClientConfig;
 import com.qcloud.cos.COSClient;
 import com.qcloud.cos.exception.CosClientException;
@@ -13,6 +14,8 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * COS管理操作，实现上传下载
@@ -69,6 +72,21 @@ public class CosManager {
         // 1. 返回原图信息
         picOperations.setIsPicInfo(1);
         putObjectRequest.setPicOperations(picOperations);
+
+        List<PicOperations.Rule> ruleList = new ArrayList<>();
+        // 2. 设置规则
+        // https://cloud.tencent.com/document/product/436/113299
+        String compressKey = FileUtil.mainName(key) + ".webp";
+        PicOperations.Rule rule = new PicOperations.Rule();
+        rule.setFileId(compressKey);
+        rule.setRule("imageMogr2/format/webp");
+        rule.setBucket(cosClientConfig.getBucket());
+        ruleList.add(rule);
+
+        picOperations.setRules(ruleList);
+        // 3. 设置
+        putObjectRequest.setPicOperations(picOperations);
+
         return cosClient.putObject(putObjectRequest);
     }
 }

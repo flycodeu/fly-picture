@@ -22,7 +22,7 @@ import GlobalHeader from '@/components/GlobalHeader.vue'
 <style scoped>
 #basicLayout .footer{
   background: white;
-  padding: 20px;
+  padding: 8px;
   position: fixed;
   bottom: 0;
   left: 0;
