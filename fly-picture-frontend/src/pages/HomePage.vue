@@ -69,8 +69,8 @@
 </template>
 <script lang="ts" setup>
 import {
-  getPictureVoPageUsingPost,
-  listPictureTagCategoryUsingGet,
+  getPictureVoPageUsingPost, getPictureVoPageWithCacheUsingPost,
+  listPictureTagCategoryUsingGet
 } from '@/api/pictureController.ts'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { message } from 'ant-design-vue'
@@ -123,7 +123,7 @@ const fetchPictureVoList = async () => {
     }
   })
 
-  const res = await getPictureVoPageUsingPost(params)
+  const res = await getPictureVoPageWithCacheUsingPost(params)
   if (res.data.code === 0 && res.data.data) {
     dataList.value = res.data.data.records ?? []
     total.value = Number(res.data.data.total) ?? 0
