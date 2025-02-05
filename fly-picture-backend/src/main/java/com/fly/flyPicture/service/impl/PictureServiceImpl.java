@@ -12,6 +12,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fly.flyPicture.exception.BusinessException;
 import com.fly.flyPicture.exception.ErrorCode;
 import com.fly.flyPicture.exception.ThrowUtils;
+import com.fly.flyPicture.manager.CosManager;
 import com.fly.flyPicture.manager.FileManager;
 import com.fly.flyPicture.manager.upload.FilePictureUpload;
 import com.fly.flyPicture.manager.upload.PictureUploadTemplate;
@@ -32,6 +33,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.beans.BeanUtils;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -48,7 +50,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> implements PictureService {
     @Resource
-    private FileManager fileManager;
+    private CosManager cosManager;
     @Resource
     private UserServiceImpl userService;
     @Resource
@@ -99,6 +101,8 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> impl
         picture.setPicScale(uploadPictureDto.getPicScale());
         picture.setPicFormat(uploadPictureDto.getPicFormat());
         picture.setUserId(user.getId());
+        // 缩略图
+        picture.setThumbnailUrl(uploadPictureDto.getThumbnailUrl());
 
         // 审核参数
         this.filePictureParams(picture, user);
@@ -110,6 +114,10 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> impl
         }
 
         boolean result = this.saveOrUpdate(picture);
+
+        // 更新清理资源
+        this.clearPicture(picture);
+
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
 
         return PictureVo.objToVo(picture);
@@ -354,6 +362,27 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> impl
         }
 
         return uploadCount;
+    }
+
+    @Override
+    @Async
+    public void clearPicture(Picture oldPicture) {
+        // 1. 获取图片文件路径
+        String url = oldPicture.getUrl();
+        // 2. 判断是否只有一条
+        Long count = this.lambdaQuery().eq(Picture::getUrl, url).count();
+        // 有多条就不清理
+        if (count > 1) {
+            return;
+        }
+        // 删除图片
+        cosManager.deleteObject(url);
+
+        // 获取缩略图、压缩图
+        String thumbnailUrl = oldPicture.getThumbnailUrl();
+        if (!StrUtil.isBlank(thumbnailUrl)) {
+            cosManager.deleteObject(thumbnailUrl);
+        }
     }
 }
 

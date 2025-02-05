@@ -107,6 +107,21 @@ export async function getPictureVoPageUsingPost(
   })
 }
 
+/** getPictureVoPageWithCache POST /api/picture/list/page/vo/cache */
+export async function getPictureVoPageWithCacheUsingPost(
+  body: API.PictureQueryDto,
+  options?: { [key: string]: any }
+) {
+  return request<API.BaseResponsePagePictureVo_>('/api/picture/list/page/vo/cache', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    data: body,
+    ...(options || {}),
+  })
+}
+
 /** listPictureTagCategory GET /api/picture/tag_category */
 export async function listPictureTagCategoryUsingGet(options?: { [key: string]: any }) {
   return request<API.BaseResponsePictureTagCategory_>('/api/picture/tag_category', {

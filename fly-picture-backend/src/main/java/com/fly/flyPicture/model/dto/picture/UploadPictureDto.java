@@ -14,6 +14,11 @@ public class UploadPictureDto {
     private String url;
 
     /**
+     * 图片缩略图地址
+     */
+    private String thumbnailUrl;
+
+    /**
      * 图片名称
      */
     private String picName;

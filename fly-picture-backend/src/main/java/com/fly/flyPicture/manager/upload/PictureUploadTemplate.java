@@ -103,9 +103,17 @@ public abstract class PictureUploadTemplate {
             ProcessResults processResults = putObjectResult.getCiUploadResult().getProcessResults();
             List<CIObject> resultsObjectList = processResults.getObjectList();
             if (!CollUtil.isEmpty(resultsObjectList)) {
+                /**
+                 * 0是图片压缩 1是图片缩略图
+                 */
                 CIObject ciObject = resultsObjectList.get(0);
+                CIObject thumbnailObject = ciObject;
+                // 有生成缩略图
+                if (resultsObjectList.size() > 1) {
+                    thumbnailObject = resultsObjectList.get(1);
+                }
                 // 返回封装结果
-                return getUploadPictureDto(originalFilename,ciObject);
+                return getUploadPictureDto(originalFilename, ciObject, thumbnailObject);
             }
 
 
@@ -127,11 +135,12 @@ public abstract class PictureUploadTemplate {
      * @param ciObject
      * @return
      */
-    private UploadPictureDto getUploadPictureDto(String originalFilename, CIObject ciObject) {
+    private UploadPictureDto getUploadPictureDto(String originalFilename, CIObject ciObject, CIObject thumbnailObject) {
         // 图片宽高比
         double picScale = NumberUtil.round(ciObject.getWidth() * 1.0 / ciObject.getHeight(), 2).doubleValue();
         // 封装返回结果
         UploadPictureDto uploadPictureDto = new UploadPictureDto();
+        // 设置原图缩略图
         uploadPictureDto.setUrl(cosClientConfig.getHost() + "/" + ciObject.getKey());
         uploadPictureDto.setPicName(FileUtil.mainName(originalFilename));
         uploadPictureDto.setPicSize(ciObject.getSize().longValue());
@@ -139,6 +148,8 @@ public abstract class PictureUploadTemplate {
         uploadPictureDto.setPicHeight(ciObject.getHeight());
         uploadPictureDto.setPicScale(picScale);
         uploadPictureDto.setPicFormat(ciObject.getFormat());
+        // 设置缩略图信息
+        uploadPictureDto.setThumbnailUrl(cosClientConfig.getHost() + "/" + thumbnailObject.getKey());
 
         return uploadPictureDto;
     }

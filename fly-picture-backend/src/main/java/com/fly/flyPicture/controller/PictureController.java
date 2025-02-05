@@ -125,6 +125,7 @@ public class PictureController {
         if (!b) {
             throw new BusinessException(ErrorCode.OPERATION_ERROR, "删除失败");
         }
+        pictureService.clearPicture(oldPicture);
         return ResultUtils.success(true);
     }
 
