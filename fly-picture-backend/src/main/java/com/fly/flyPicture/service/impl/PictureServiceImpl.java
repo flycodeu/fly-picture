@@ -19,8 +19,10 @@ import com.fly.flyPicture.manager.upload.PictureUploadTemplate;
 import com.fly.flyPicture.manager.upload.UrlPictureUpload;
 import com.fly.flyPicture.model.dto.picture.*;
 import com.fly.flyPicture.model.entity.Picture;
+import com.fly.flyPicture.model.entity.Space;
 import com.fly.flyPicture.model.entity.User;
 import com.fly.flyPicture.model.enums.PictureReviewStatusEnum;
+import com.fly.flyPicture.model.enums.UserRoleEnum;
 import com.fly.flyPicture.model.vo.PictureVo;
 import com.fly.flyPicture.model.vo.UserVo;
 import com.fly.flyPicture.service.PictureService;
@@ -57,11 +59,23 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> impl
     private FilePictureUpload filePictureUpload;
     @Resource
     private UrlPictureUpload urlPictureUpload;
+    @Resource
+    private SpaceServiceImpl spaceService;
 
     @Override
     public PictureVo uploadPicture(Object inputSource, PictureUploadDto pictureUploadDto, User user) {
         // 1. 校验文件
         ThrowUtils.throwIf(inputSource == null, ErrorCode.PARAMS_ERROR, "文件不能为空");
+        // 校验空间是否存在
+        Long spaceId = pictureUploadDto.getSpaceId();
+        if (spaceId != null) {
+            Space space = spaceService.getById(spaceId);
+            ThrowUtils.throwIf(space == null, ErrorCode.PARAMS_ERROR, "空间不存在");
+            // 校验是否有空间的权限
+            if (!user.getId().equals(space.getUserId())) {
+                throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "没有空间权限");
+            }
+        }
 
         // 2.如果是更新， 判断图片是否存在
         Long pictureId = null;
@@ -69,6 +83,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> impl
             pictureId = pictureUploadDto.getId();
         }
 
+        // 更新
         if (pictureId != null) {
             //boolean exists = this.lambdaQuery().eq(Picture::getId, pictureId).exists();
             Picture oldPicture = this.getById(pictureId);
@@ -77,10 +92,30 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> impl
             if (!Objects.equals(oldPicture.getUserId(), user.getId()) && !userService.isAdmin(user)) {
                 throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
             }
+            // 校验空间是否一致
+            if (spaceId == null) {
+                // 老图片的spaceId不为空
+                if (oldPicture.getSpaceId() != null) {
+                    spaceId = oldPicture.getSpaceId();
+                }
+            } else {
+                // 传入的spaceId不为空，比较老图片的spaceid和传入的spaceid
+                if (!ObjUtil.equals(oldPicture.getSpaceId(), spaceId)) {
+                    throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "空间不一致");
+                }
+            }
         }
 
+        String uploadPathPrefix;
         // 3. 上传文件
-        String uploadPathPrefix = String.format("public/%s", user.getId());
+        if (spaceId == null) {
+            // 公共图床
+            uploadPathPrefix = String.format("public/%s", user.getId());
+        } else {
+            // 空间图床
+            uploadPathPrefix = String.format("space/%s", spaceId);
+        }
+
         PictureUploadTemplate pictureUploadTemplate = filePictureUpload;
         if (inputSource instanceof String) {
             pictureUploadTemplate = urlPictureUpload;
@@ -100,6 +135,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> impl
         picture.setPicHeight(uploadPictureDto.getPicHeight());
         picture.setPicScale(uploadPictureDto.getPicScale());
         picture.setPicFormat(uploadPictureDto.getPicFormat());
+        picture.setSpaceId(spaceId);
         picture.setUserId(user.getId());
         // 缩略图
         picture.setThumbnailUrl(uploadPictureDto.getThumbnailUrl());
@@ -382,6 +418,24 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> impl
         String thumbnailUrl = oldPicture.getThumbnailUrl();
         if (!StrUtil.isBlank(thumbnailUrl)) {
             cosManager.deleteObject(thumbnailUrl);
+        }
+    }
+
+    @Override
+    public void checkPictureAuth(User loginUser, Picture picture) {
+        Long loginUserId = loginUser.getId();
+        Long spaceId = picture.getSpaceId();
+        // 1. 公共图片
+        if (spaceId == null) {
+            if (!loginUserId.equals(picture.getUserId()) && !loginUser.getUserRole().equals(UserRoleEnum.ADMIN.getValue())) {
+                throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "没有权限操作");
+            }
+        }
+        // 2. 私有空间
+        else {
+            if (!loginUserId.equals(picture.getUserId())) {
+                throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "没有权限操作");
+            }
         }
     }
 }

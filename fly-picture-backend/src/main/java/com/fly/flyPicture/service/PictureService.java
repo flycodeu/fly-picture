@@ -80,4 +80,12 @@ public interface PictureService extends IService<Picture> {
      * @param oldPicture
      */
     void clearPicture(Picture oldPicture);
+
+    /**
+     * 检查图片权限,如果是公开图片，判断是否是当前用户或者管理员，如果是私有空间，判断是否是当前用户
+     *
+     * @param loginUser
+     * @param picture
+     */
+    void checkPictureAuth(User loginUser, Picture picture);
 }

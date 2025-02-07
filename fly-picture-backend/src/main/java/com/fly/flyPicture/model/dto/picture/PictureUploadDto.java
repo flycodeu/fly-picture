@@ -22,4 +22,9 @@ public class PictureUploadDto implements Serializable {
      * 图片名称
      */
     private String picName;
+
+    /**
+     * 空间id，可以为空
+     */
+    private Long spaceId;
 }
