@@ -2,10 +2,8 @@ package com.fly.flyPicture.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.fly.flyPicture.model.dto.picture.PictureQueryDto;
-import com.fly.flyPicture.model.dto.picture.PictureReviewDto;
-import com.fly.flyPicture.model.dto.picture.PictureUploadBatchDto;
-import com.fly.flyPicture.model.dto.picture.PictureUploadDto;
+import com.fly.flyPicture.common.DeleteRequest;
+import com.fly.flyPicture.model.dto.picture.*;
 import com.fly.flyPicture.model.dto.user.UserQueryDto;
 import com.fly.flyPicture.model.entity.Picture;
 import com.baomidou.mybatisplus.extension.service.IService;
@@ -88,4 +86,20 @@ public interface PictureService extends IService<Picture> {
      * @param picture
      */
     void checkPictureAuth(User loginUser, Picture picture);
+
+    /**
+     * 删除图片，同时校验图片是否存在在空间，如果存在，需要校验当前删除用户是否是空间的管理员，如果不是空间，那么就校验是否是创建用户或者管理员
+     * @param id
+     * @param loginUser
+     * @return
+     */
+    Boolean deletePictureById(Long id, User loginUser);
+
+    /**
+     * 编辑图片
+     * @param pictureEditDto
+     * @param request
+     * @return
+     */
+    Boolean editPicture(PictureEditDto pictureEditDto, HttpServletRequest request);
 }

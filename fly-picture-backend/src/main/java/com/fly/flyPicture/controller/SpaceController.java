@@ -11,12 +11,10 @@ import com.fly.flyPicture.constant.UserConstant;
 import com.fly.flyPicture.exception.BusinessException;
 import com.fly.flyPicture.exception.ErrorCode;
 import com.fly.flyPicture.exception.ThrowUtils;
-import com.fly.flyPicture.model.dto.space.SpaceAddDto;
-import com.fly.flyPicture.model.dto.space.SpaceEditDto;
-import com.fly.flyPicture.model.dto.space.SpaceQueryDto;
-import com.fly.flyPicture.model.dto.space.SpaceUpdateDto;
+import com.fly.flyPicture.model.dto.space.*;
 import com.fly.flyPicture.model.entity.Space;
 import com.fly.flyPicture.model.entity.User;
+import com.fly.flyPicture.model.enums.SpaceLevelEnum;
 import com.fly.flyPicture.model.vo.SpaceVo;
 import com.fly.flyPicture.service.impl.SpaceServiceImpl;
 import com.fly.flyPicture.service.impl.UserServiceImpl;
@@ -35,6 +33,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @RequestMapping("/space")
 @RestController
@@ -223,6 +222,25 @@ public class SpaceController {
         boolean result = spaceService.updateById(space);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
         return ResultUtils.success(result);
+    }
+
+    /**
+     * 获取所有的空间等级
+     *
+     * @param spaceLevelDto
+     * @return
+     */
+    @GetMapping("/list/spaceLevel")
+    public BaseResponse<List<SpaceLevelDto>> getSpaceLevel(SpaceLevelDto spaceLevelDto) {
+        List<SpaceLevelDto> spaceLevelDtos = Arrays.stream(SpaceLevelEnum.values())
+                .map(spaceLevelEnum -> new SpaceLevelDto(
+                        spaceLevelEnum.getValue(),
+                        spaceLevelEnum.getText(),
+                        spaceLevelEnum.getMaxCount(),
+                        spaceLevelEnum.getMaxSize()
+                )).collect(Collectors.toList());
+
+        return ResultUtils.success(spaceLevelDtos);
     }
 
 }
