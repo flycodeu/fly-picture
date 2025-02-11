@@ -40,6 +40,9 @@ public class PictureEditDto implements Serializable {
      * 标签（JSON 数组）
      */
     private List<String> tags;
+
+
+    private Long spaceId;
     
 
     private static final long serialVersionUID = 1L;

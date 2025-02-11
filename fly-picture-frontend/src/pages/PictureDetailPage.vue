@@ -72,10 +72,7 @@
   </div>
 </template>
 <script lang="ts" setup>
-import {
-  deletePictureByIdUsingPost,
-  getPictureVoUsingGet,
-} from '@/api/pictureController.ts'
+import { deletePictureByIdUsingPost, getPictureVoUsingGet } from '@/api/pictureController.ts'
 import { computed, onMounted, ref } from 'vue'
 import { message } from 'ant-design-vue'
 import { downloadImage, formatSize } from '@/utils'
@@ -122,7 +119,14 @@ const canEdit = computed(() => {
 })
 
 const doEdit = async () => {
-  await router.push('/add_picture?id=' + picture.value.id)
+  //await router.push('/add_picture?id=' + picture.value.id)
+  await router.push({
+    path: '/add_picture',
+    query: {
+      id: picture.value.id,
+      spaceId: picture.value.spaceId,
+    },
+  })
 }
 const doDelete = async () => {
   if (!picture.value.id) {
@@ -140,9 +144,8 @@ const doDelete = async () => {
 }
 
 const doDownload = () => {
-  downloadImage(picture.value.url);
+  downloadImage(picture.value.url)
 }
-
 </script>
 
 <style scoped></style>

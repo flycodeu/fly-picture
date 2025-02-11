@@ -33,6 +33,12 @@
                     <LoginOutlined />
                     退出登录
                   </a-menu-item>
+                  <a-menu-item>
+                    <router-link to="/my_space">
+                      <UserOutlined />
+                      我的空间
+                    </router-link>
+                  </a-menu-item>
                   <a-menu-item @click="doUserCenter">
                     <UserOutlined />
                     个人设置
@@ -72,6 +78,11 @@ const originItems = [
     title: '创建图片',
   },
   {
+    key: '/add_space',
+    label: '创建空间',
+    title: '创建空间',
+  },
+  {
     key: '/admin/userManage',
     label: '用户管理',
     title: '用户管理',
@@ -81,6 +92,12 @@ const originItems = [
     label: '图片管理',
     title: '图片管理',
   },
+  {
+    key: '/admin/spaceManage',
+    label: '空间管理',
+    title: '空间管理',
+  },
+
   {
     key: '/about',
     label: '关于',

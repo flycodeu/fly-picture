@@ -106,6 +106,8 @@ public class PictureVo implements Serializable {
      */
     private UserVo user;
 
+
+    private Long spaceId;
     /**
      * 图片vo转换为实体类
      *

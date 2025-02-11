@@ -45,6 +45,7 @@ public class PictureUpdateDto implements Serializable {
      */
     private List<String> tags;
 
+    private Long spaceId;
 
     private static final long serialVersionUID = 1L;
 }

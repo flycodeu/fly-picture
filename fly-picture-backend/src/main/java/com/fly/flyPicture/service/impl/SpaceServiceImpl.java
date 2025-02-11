@@ -180,7 +180,7 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
         validSpace(space, true);
 
         // 3. 校验权限，普通用户只能创建普通权限空间
-        if (SpaceLevelEnum.Common.getValue() != space.getSpaceLevel() && !userService.isAdmin(loginUser)) {
+        if (SpaceLevelEnum.Common.getValue() != spaceAddDto.getSpaceLevel() && !userService.isAdmin(loginUser)) {
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
         }
         // 4. 控制一个用户只能有一个空间 加锁+事务

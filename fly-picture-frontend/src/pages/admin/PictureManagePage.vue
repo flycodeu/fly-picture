@@ -6,8 +6,8 @@
         <a-space>
           <a-button type="primary" href="/add_picture" target="_blank">+创建图片</a-button>
           <a-button type="primary" href="/add_picture/batch" target="_blank" ghost
-            >+批量创建图片</a-button
-          >
+            >+批量创建图片
+          </a-button>
         </a-space>
       </a-flex>
       <div style="margin-bottom: 20px"></div>
@@ -161,6 +161,7 @@ const columns = [
     title: '用户id',
     dataIndex: 'userId',
   },
+
   {
     title: '审核信息',
     dataIndex: 'reviewMessages',
@@ -204,7 +205,7 @@ const pagination = computed(() => {
 })
 
 const fetchPictureList = async () => {
-  const res = await getPicturePageUsingPost({ ...searchParams })
+  const res = await getPicturePageUsingPost({ ...searchParams, nullSpaceId: true })
   if (res.data.code === 0 && res.data.data) {
     dataList.value = res.data.data.records ?? []
     total.value = res.data.data.total ?? 0

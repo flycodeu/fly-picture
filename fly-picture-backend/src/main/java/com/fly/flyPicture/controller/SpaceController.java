@@ -227,11 +227,10 @@ public class SpaceController {
     /**
      * 获取所有的空间等级
      *
-     * @param spaceLevelDto
      * @return
      */
     @GetMapping("/list/spaceLevel")
-    public BaseResponse<List<SpaceLevelDto>> getSpaceLevel(SpaceLevelDto spaceLevelDto) {
+    public BaseResponse<List<SpaceLevelDto>> getSpaceLevel() {
         List<SpaceLevelDto> spaceLevelDtos = Arrays.stream(SpaceLevelEnum.values())
                 .map(spaceLevelEnum -> new SpaceLevelDto(
                         spaceLevelEnum.getValue(),

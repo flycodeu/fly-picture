@@ -19,10 +19,11 @@
 import { ref } from 'vue'
 import { PlusOutlined, LoadingOutlined } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
-import type { UploadChangeParam, UploadProps } from 'ant-design-vue'
+import type { UploadProps } from 'ant-design-vue'
 import { uploadPictureUsingPost } from '@/api/pictureController.ts'
 
 interface Props {
+  spaceId?: number
   picture?: API.PictureVo
   onSuccess?: (newPicture: API.PictureVo) => void
 }
@@ -57,6 +58,7 @@ const handleUpload = async ({ file }: any) => {
   loading.value = true
   try {
     const params = props.picture ? { id: props.picture.id } : {}
+    params.spaceId = props.spaceId
     const res = await uploadPictureUsingPost(params, {}, file)
     if (res.data.code === 0 && res.data.data) {
       message.success('上传图片成功')
@@ -65,7 +67,7 @@ const handleUpload = async ({ file }: any) => {
       message.error('上传图片失败')
     }
   } catch (e) {
-    message.error('上传图片失败,'+e.message)
+    message.error('上传图片失败,' + e.message)
   } finally {
     loading.value = false
   }
@@ -79,7 +81,7 @@ const handleUpload = async ({ file }: any) => {
   min-width: 152px;
 }
 
-.picture-uploader img{
+.picture-uploader img {
   max-width: 100%;
   max-height: 480px;
 }

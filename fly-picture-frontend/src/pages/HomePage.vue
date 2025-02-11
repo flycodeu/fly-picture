@@ -32,50 +32,60 @@
       </a-space>
     </div>
 
+    <PictureList :data-list="dataList" :loading="loading"></PictureList>
+    <a-pagination
+      style="text-align: center"
+      v-model:current="searchParams.current"
+      v-model:page-size="searchParams.pageSize"
+      :total="total"
+      @change="onPageChange"
+    ></a-pagination>
     <!--图片列表-->
-    <a-list
-      :grid="{ gutter: 16, xs: 1, sm: 2, md: 4, lg: 4, xl: 5, xxl: 6 }"
-      :data-source="dataList"
-      :pagination="pagination"
-    >
-      <template #renderItem="{ item: picture }">
-        <a-list-item style="padding: 0">
-          <!-- 单张图片 -->
-          <a-card hoverable @click="doClickPicture(picture)">
-            <template #cover>
-              <img
-                style="height: 180px; object-fit: cover"
-                :alt="picture.name"
-                :src="picture.thumbnailUrl ?? picture.url"
-              />
-            </template>
-            <a-card-meta :title="picture.name">
-              <template #description>
-                <a-flex>
-                  <a-tag color="green">
-                    {{ picture.category ?? '默认' }}
-                  </a-tag>
-                  <a-tag v-for="tag in picture.tags" :key="tag">
-                    {{ tag }}
-                  </a-tag>
-                </a-flex>
-              </template>
-            </a-card-meta>
-          </a-card>
-        </a-list-item>
-      </template>
-    </a-list>
+    <!--    <a-list
+          :grid="{ gutter: 16, xs: 1, sm: 2, md: 4, lg: 4, xl: 5, xxl: 6 }"
+          :data-source="dataList"
+          :pagination="pagination"
+        >
+          <template #renderItem="{ item: picture }">
+            <a-list-item style="padding: 0">
+              &lt;!&ndash; 单张图片 &ndash;&gt;
+              <a-card hoverable @click="doClickPicture(picture)">
+                <template #cover>
+                  <img
+                    style="height: 180px; object-fit: cover"
+                    :alt="picture.name"
+                    :src="picture.thumbnailUrl ?? picture.url"
+                  />
+                </template>
+                <a-card-meta :title="picture.name">
+                  <template #description>
+                    <a-flex>
+                      <a-tag color="green">
+                        {{ picture.category ?? '默认' }}
+                      </a-tag>
+                      <a-tag v-for="tag in picture.tags" :key="tag">
+                        {{ tag }}
+                      </a-tag>
+                    </a-flex>
+                  </template>
+                </a-card-meta>
+              </a-card>
+            </a-list-item>
+          </template>
+        </a-list>-->
   </div>
 </template>
 <script lang="ts" setup>
 import {
-  getPictureVoPageUsingPost, getPictureVoPageWithCacheUsingPost,
-  listPictureTagCategoryUsingGet
+  getPictureVoPageUsingPost,
+  getPictureVoPageWithCacheUsingPost,
+  listPictureTagCategoryUsingGet,
 } from '@/api/pictureController.ts'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { message } from 'ant-design-vue'
 import router from '@/router'
 import { useRouter } from 'vue-router'
+import PictureList from '@/components/PictureList.vue'
 
 const dataList = ref<API.PictureVo[]>()
 const loading = ref(true)
@@ -107,6 +117,12 @@ const pagination = computed(() => {
   }
 })
 
+const onPageChange = (page: any, pageSize: any) => {
+  searchParams.current = page
+  searchParams.pageSize = pageSize
+  fetchPictureVoList()
+}
+
 const fetchPictureVoList = async () => {
   loading.value = true
   const params = {
@@ -123,7 +139,7 @@ const fetchPictureVoList = async () => {
     }
   })
 
-  const res = await getPictureVoPageWithCacheUsingPost(params)
+  const res = await getPictureVoPageUsingPost(params)
   if (res.data.code === 0 && res.data.data) {
     dataList.value = res.data.data.records ?? []
     total.value = Number(res.data.data.total) ?? 0
